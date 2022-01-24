@@ -1,21 +1,26 @@
 Package: mRFE
 Title: Recursive Feature Elimination Via Multiple Support Vector Machine
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R: c(
+    person("John Colby", role = "aut"),
     person("Lluís", "Revilla Sancho", , "lluis.revilla@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-9747-2570"))
+  )
 Description: Implementation of the mSVM-RFE algorithm to feature selection
-License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+    including the option to cut the features by half each round (instead
+    of one-by-one) if there are many features.
+License: GPL (>= 3)
+URL: https://github.com/llrs/SVM-RFE
+BugReports: https://github.com/llrs/SVM-RFE/issues
 Depends: 
     e1071 (>= 1.7.8),
     R (>= 2.10)
 Suggests: 
-    rmarkdown,
+    knitr,
+    rmarkdown
+VignetteBuilder: 
     knitr
-VignetteBuilder: knitr
+Encoding: UTF-8
 LazyData: true
-URL: https://github.com/llrs/SVM-RFE
-BugReports: https://github.com/llrs/SVM-RFE/issues
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2

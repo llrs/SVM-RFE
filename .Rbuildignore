@@ -1,2 +1,5 @@
 ^README\.Rmd$
 ^vignettes/articles$
+^.*\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
