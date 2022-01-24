@@ -11,6 +11,8 @@ svmRFE.wrap <- function(test.fold, X, ...) {
 }
 
 #' @export
+#' @importFrom utils txtProgressBar flush.console
+#' @importFrom stats sd na.omit
 svmRFE <- function(X, k=1, halve.above=5000) {
 # Feature selection with Multiple SVM Recursive Feature Elimination (RFE) algorithm
     n = ncol(X) - 1
@@ -86,6 +88,7 @@ svmRFE <- function(X, k=1, halve.above=5000) {
 }
 
 #' @export
+#' @importFrom e1071 svm
 getWeights <- function(test.fold, X) {
 # Fit a linear SVM model and obtain feature weights
     train.data = X
@@ -98,6 +101,7 @@ getWeights <- function(test.fold, X) {
 }
 
 #' @export
+#' @importFrom utils write.table
 WriteFeatures <- function(results, input, save=T, file='features_ranked.txt') {
 # Compile feature rankings across multiple folds
     featureID = sort(apply(sapply(results, function(x) sort(x$feature, index.return=T)$ix), 1, mean), index=T)$ix
@@ -112,6 +116,7 @@ WriteFeatures <- function(results, input, save=T, file='features_ranked.txt') {
 }
 
 #' @export
+#' @importFrom e1071 tune tune.control
 FeatSweep.wrap <- function(i, results, input) {
 # Wrapper to estimate generalization error across all hold-out folds, for a given number of top features
     svm.list = lapply(results, function(x) tune(svm,
@@ -131,6 +136,7 @@ FeatSweep.wrap <- function(i, results, input) {
 }
 
 #' @export
+#' @importFrom graphics points text plot abline lines
 PlotErrors <- function(errors, errors2=NULL, no.info=0.5,
                        ylim=range(c(errors, errors2), na.rm=T),
                        xlab='Number of Features',  ylab='10x CV Error') {
