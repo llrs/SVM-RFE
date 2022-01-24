@@ -1,0 +1,171 @@
+# -----------------------------------------------------------
+# CITATION file created with {cffr} R package, v0.2.1
+# See also: https://docs.ropensci.org/cffr/
+# -----------------------------------------------------------
+ 
+cff-version: 1.2.0
+message: 'To cite package "mRFE" in publications use:'
+type: software
+license: GPL-3.0-or-later
+title: 'mRFE: Recursive Feature Elimination Via Multiple Support Vector Machine'
+version: 0.0.0.9000
+abstract: Implementation of the mSVM-RFE algorithm to feature selection including
+  the option to cut the features by half each round (instead of one-by-one) if there
+  are many features.
+authors:
+- name: John Colby
+- family-names: Revilla Sancho
+  given-names: Lluís
+  email: lluis.revilla@gmail.com
+  orcid: https://orcid.org/0000-0001-9747-2570
+preferred-citation:
+  type: article
+  title: Gene selection for cancer classification using support vector machines
+  authors:
+  - name: Guyon
+  - name: Isabelle
+  - name: Weston
+  - name: Jason
+  - name: Barnhill
+  - name: Stephen
+  - name: Vapnik
+  - name: Vladimir
+  volume: '46'
+  journal: Machine learning
+  year: '2002'
+  notes: Original SVM-RFE paper.
+  start: 389-422
+repository-code: https://github.com/llrs/SVM-RFE
+url: https://github.com/llrs/SVM-RFE
+contact:
+- family-names: Revilla Sancho
+  given-names: Lluís
+  email: lluis.revilla@gmail.com
+  orcid: https://orcid.org/0000-0001-9747-2570
+references:
+- type: article
+  title: Multiple SVM-RFE for gene selection in cancer classification with expression
+    data.
+  authors:
+  - name: Duan
+  - name: Kai-Bo
+  - name: Rajapakse
+  - family-names: C
+    given-names: Jagath
+  - name: Wang
+  - name: Haiying
+  - name: Azuaje
+  - name: Francisco
+  volume: '4'
+  issue: '3'
+  journal: IEEE transactions on nanobioscience
+  month: '9'
+  year: '2005'
+  notes: Original Multiple SVM-RFE paper.
+  start: 228-234
+- type: software
+  title: e1071
+  abstract: 'e1071: Misc Functions of the Department of Statistics, Probability Theory
+    Group (Formerly: E1071), TU Wien'
+  notes: Depends
+  authors:
+  - family-names: Meyer
+    given-names: David
+    email: David.Meyer@R-project.org
+  - family-names: Dimitriadou
+    given-names: Evgenia
+  - family-names: Hornik
+    given-names: Kurt
+  - family-names: Weingessel
+    given-names: Andreas
+  - family-names: Leisch
+    given-names: Friedrich
+  year: '2022'
+  url: https://CRAN.R-project.org/package=e1071
+  version: '>= 1.7.8'
+- type: software
+  title: graphics
+  abstract: 'R: A Language and Environment for Statistical Computing'
+  notes: Depends
+  authors:
+  - name: R Core Team
+  location:
+    name: Vienna, Austria
+  year: '2022'
+  url: https://www.R-project.org/
+  institution:
+    name: R Foundation for Statistical Computing
+- type: software
+  title: 'R: A Language and Environment for Statistical Computing'
+  notes: Depends
+  authors:
+  - name: R Core Team
+  location:
+    name: Vienna, Austria
+  year: '2022'
+  url: https://www.R-project.org/
+  institution:
+    name: R Foundation for Statistical Computing
+  version: '>= 2.10'
+- type: software
+  title: utils
+  abstract: 'R: A Language and Environment for Statistical Computing'
+  notes: Depends
+  authors:
+  - name: R Core Team
+  location:
+    name: Vienna, Austria
+  year: '2022'
+  url: https://www.R-project.org/
+  institution:
+    name: R Foundation for Statistical Computing
+- type: software
+  title: knitr
+  abstract: 'knitr: A General-Purpose Package for Dynamic Report Generation in R'
+  notes: Suggests
+  authors:
+  - family-names: Xie
+    given-names: Yihui
+    email: xie@yihui.name
+    orcid: https://orcid.org/0000-0003-0645-5666
+  year: '2022'
+  url: https://CRAN.R-project.org/package=knitr
+- type: software
+  title: rmarkdown
+  abstract: 'rmarkdown: Dynamic Documents for R'
+  notes: Suggests
+  authors:
+  - family-names: Allaire
+    given-names: JJ
+    email: jj@rstudio.com
+  - family-names: Xie
+    given-names: Yihui
+    email: xie@yihui.name
+    orcid: https://orcid.org/0000-0003-0645-5666
+  - family-names: McPherson
+    given-names: Jonathan
+    email: jonathan@rstudio.com
+  - family-names: Luraschi
+    given-names: Javier
+    email: javier@rstudio.com
+  - family-names: Ushey
+    given-names: Kevin
+    email: kevin@rstudio.com
+  - family-names: Atkins
+    given-names: Aron
+    email: aron@rstudio.com
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@rstudio.com
+  - family-names: Cheng
+    given-names: Joe
+    email: joe@rstudio.com
+  - family-names: Chang
+    given-names: Winston
+    email: winston@rstudio.com
+  - family-names: Iannone
+    given-names: Richard
+    email: rich@rstudio.com
+    orcid: https://orcid.org/0000-0003-3925-190X
+  year: '2022'
+  url: https://CRAN.R-project.org/package=rmarkdown
