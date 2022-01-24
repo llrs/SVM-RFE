@@ -26,12 +26,12 @@ For convenience, these commands are compiled in [`demo.R`](https://github.com/jo
 
 Input data should be formatted as a data frame, with one row for each observation, and one column for each feature. The first column should contain the true class labels. Factor features (ex: gender, site, etc.) should be coded as multiple numeric "dummy" features (see `?model.matrix` for how to automatically generate these in R). 
 
-An example dataset (derived from a bit of the [ADHD200 sample](http://fcon_1000.projects.nitrc.org/indi/adhd200/) is included in the `demo` directory:
+An example dataset (derived from a bit of the [ADHD200 sample](http://fcon_1000.projects.nitrc.org/indi/adhd200/) is included:
 
 ```{r}
 set.seed(12345)
 library(e1071)
-load('demo/input.Rdata')
+data(input)
 dim(input)
 input[1:5,1:5]
 ```
@@ -103,7 +103,7 @@ If we were going to apply these findings to a final test set somewhere, we would
 
 ```{r}
 top.features <- WriteFeatures(results, input, save=FALSE)
-head(top.features)
+plot(top.features$AvgRank)
 ```
 
 Ordered by average rank across the 10 folds (`AvgRank`, lower numbers are better), this gives us a list of the feature names (`FeatureName`, i.e. the corresponding column name from `input`), as well as the feature indices (`FeatureID`, i.e. the corresponding column index from `input` minus 1).
@@ -131,7 +131,7 @@ Choose the optimum number of features
 To implement it over the top 5 features, we do:
 
 ```{r}
-featsweep = lapply(1:5, FeatSweep.wrap, results, input)
+featsweep <- lapply(1:5, FeatSweep.wrap, results, input)
 featsweep
 ```
 
