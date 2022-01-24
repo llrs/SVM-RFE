@@ -1,0 +1,180 @@
+---
+title: "mRFE"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{mRFE}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(mRFE)
+```
+
+## Basic usage
+
+For convenience, these commands are compiled in [`demo.R`](https://github.com/johncolby/SVM-RFE/blob/master/demo/demo.R) in the `demo` directory.
+
+### Input
+
+Input data should be formatted as a data frame, with one row for each observation, and one column for each feature. The first column should contain the true class labels. Factor features (ex: gender, site, etc.) should be coded as multiple numeric "dummy" features (see `?model.matrix` for how to automatically generate these in R). 
+
+An example dataset (derived from a bit of the [ADHD200 sample](http://fcon_1000.projects.nitrc.org/indi/adhd200/) is included in the `demo` directory:
+
+```{r}
+set.seed(12345)
+library(e1071)
+load('demo/input.Rdata')
+dim(input)
+input[1:5,1:5]
+```
+
+There are 208 observations (individual subjects), and 546 features. The first column (`DX2`) contains the class labels (`TD`: typically-developing control, `ADHD`: attention deficit hyperactivity disorder).
+
+### svmRFE()
+
+To perform the feature ranking, use the `svmRFE` function:
+
+```{r}
+res <- svmRFE(input, k=10, halve.above=100)
+```
+
+Here we've indicated that we want `k=10` for the k-fold cross validation as the "multiple" part of mSVM-RFE. To use standard SVM-RFE, you can use `k=1`. Also notice the `halve.above` parameter. This allows you to cut the features in half each round, instead of one by one. This is very useful for data sets with many features. Here we've set `halve.above=100`, so the features will be cut in half each round until there are fewer than 100 remaining. The output is a vector of feature indices, now ordered from most to least "useful".
+
+Note that because of the randomness of the CV draws, features with close ranking scores, and the possible inclusion of useless features, these rankings can change some run to run. However, your output for this demo should be identical because we've all reset the random seed to the same value.
+
+## Estimating generalization error
+
+When exploring machine learning options, it is often useful to estimate generalization error and use this as a benchmark. However, it is important to remember that the **feature selection step must be repeated from scratch on each training set** in whatever cross validation or similar resampling scheme chosen. When feature selection is performed on a data set with many features, it will pick some truly useful features that will generalize, but it will also likely pick some useless features that, by mere chance, happened to align closely with the class labels of the training set. While including these features will give (spuriously) good performance if the error is estimated from this training set itself, the estimated performance will decrease to its true value when the classifier is applied to a true test set where these features are useless. Guyon et al. actually made this mistake in the example demos in their original SVM-RFE paper. This issue is outlined very nicely in:
+
+```
+@article{ambroise_selection_2002,
+    title = {Selection bias in gene extraction on the basis of microarray gene-expression data.},
+    volume = {99},
+    number = {10},
+    journal = {Proceedings of the National Academy of Sciences of the United States of America},
+    author = {Ambroise, Christophe and McLachlan, Geoffrey J},
+    month = may,
+    year = {2002},
+    pages = {6562–6566}
+}
+```
+
+### Set up folds
+
+Basically, the way to go is to wrap the *entire* feature selection and generalization error estimation process in a top-level loop of external cross validation. For 10-fold CV, we begin by defining which observations are in which folds.
+
+```{r}
+nfold <- 10
+nrows <- nrow(input)
+folds <- rep(1:nfold, length.out = nrows)[sample(nrows)]
+folds
+```
+
+In R, many parallel functions like to operate on lists, so next we'll reformat `folds` into a list, where each list element is a vector containing the test set indices for that fold.
+
+```{r}
+folds <- lapply(1:nfold, function(x) which(folds == x))
+folds
+```
+
+### Perform feature ranking on all training sets
+
+Using `lapply`, or one of its generic parallel cousins (ex: `sge.parLapply` from the `Rsge` package), we can now perform the feature ranking for all 10 training sets.
+
+```{r}
+results <- lapply(folds, svmRFE.wrap, input, k=10, halve.above=100)
+length(results)
+head(results)
+```
+
+Each list element in `results` contains the feature rankings for that fold (`feature.ids`), as well as the training set row names used to obtain them (`train.data.ids`). The remaining test set row names are included as well (`test.data.ids`).
+
+### Obtain top features across all folds
+
+If we were going to apply these findings to a final test set somewhere, we would still want the best features across *all* of this training data.
+
+```{r}
+top.features <- WriteFeatures(results, input, save=FALSE)
+head(top.features)
+```
+
+Ordered by average rank across the 10 folds (`AvgRank`, lower numbers are better), this gives us a list of the feature names (`FeatureName`, i.e. the corresponding column name from `input`), as well as the feature indices (`FeatureID`, i.e. the corresponding column index from `input` minus 1).
+
+### Estimate generalization error using a varying number of top features
+
+Now that we have a ranking of features for each of the 10 training sets, the final step is to estimate the generalization error we can expect if we were to train a final classifier on these features and apply it to a new test set. Here, a radial basis function kernel SVM is tuned on each training set independently. This consists of doing internal 10-fold CV error estimation at each combination of SVM hyperparameters (Cost and Gamma) using grid search. The optimal parameters are then used to train the SVM on the entire training set. Finally, generalization error is determined by predicting the corresponding test set. This is done for each fold in the external 10-fold CV, and all 10 of these generalization error estimates are averaged to give more stability. This process is repeated while varying the number of top features that are used as input, and there will typically be a "sweet spot" where there are not too many nor too few features. Outlined, this process looks like:
+
+```
+external 10x CV
+  Rank features with mSVM-RFE
+  for(nfeat=1 to 500ish)
+    Grid search over SVM parameters
+      10x CV
+        Train SVM
+        Obtain generalization error estimate
+      Average generalization error estimate across multiple folds
+    Choose parameters with best average performance
+    Train SVM on full training set
+    Obtain generalization error estimate on corresponding external CV test set
+Average generalization errors across multiple folds
+Choose the optimum number of features
+```
+
+To implement it over the top 5 features, we do:
+
+```{r}
+featsweep = lapply(1:5, FeatSweep.wrap, results, input)
+featsweep
+```
+
+Each `featsweep` list element corresponds to using that many of the top features (i.e. `featsweep[1]` is using only the top feature, `featsweep[2]` is using the top 2 features, etc.). Within each, `svm.list` contains the generalization error estimates for each of the 10 folds in the external 10-fold CV. These accuracies are averaged as `error`.
+
+### Plot of generalization error vs. # of features
+
+To show these results visually, we can plot the average generalization error vs. the number of top features used as input. 
+
+For reference, it is useful to show the chance error rate. Typically, this is equal to the "no information" rate we would get if we simply always picked the class label with the greater prevalence in the data set.
+
+```{r}
+no.info <- min(prop.table(table(input[,1])))
+errors <- sapply(featsweep, function(x) ifelse(is.null(x), NA, x$error))
+
+dev.new(width=4, height=4, bg='white')
+PlotErrors(errors, no.info=no.info)
+dev.off()
+```
+
+![msvmrfe_demo](https://user-images.githubusercontent.com/473295/88239232-a9f71a80-cc38-11ea-8898-d43864d1d0ff.png)
+
+## Parallelization
+
+As you can probably see, the main limitation in doing this type of exploration is processing time. For example, in this demonstration, and just considering the number of times we have to fit an SVM, we have:
+
+- **Feature ranking**
+
+    10 external folds x 546 features x 10 msvmRFE folds = 54600 linear SVMs
+
+- **Generalization error estimation**
+
+    10 external folds x 546 features x 169 hyperparamter combos for exhaustive search x 10 folds each = 9227400 RBF kernel SVMs
+
+We have already shortened this some by 1) eliminating more than one feature at a time in the feature ranking step, and 2) only estimating generalization accuracies across a sweep of the top features.
+
+Other ideas to shorten processing time:
+
+- Fewer external CV folds.
+- Smaller or coarser grid for parameter sweep in SVM tuning step
+- Fewer CV folds in SVM tuning step.
+
+This code is already set up to use `lapply` calls for these 2 mains task, so fortunately, they can be relatively easily parallelized using a variety of R packages that include parallel versions of `lapply`. Examples include:
+
+- `mclapply` in the [`multicore`](http://cran.r-project.org/web/packages/multicore/index.html) package
+- `sge.parLapply` in the [`Rsge`](http://cran.r-project.org/web/packages/Rsge/index.html) package
