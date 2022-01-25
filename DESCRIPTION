@@ -2,9 +2,9 @@ Package: mRFE
 Title: Recursive Feature Elimination Via Multiple Support Vector Machine
 Version: 0.0.0.9000
 Authors@R: c(
-    person("John Colby", role = "aut"),
+    person("John Colby", role = "aut", comment = "Original author"),
     person("Lluís", "Revilla Sancho", , "lluis.revilla@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0001-9747-2570"))
+           comment = c(ORCID = "0000-0001-9747-2570", note = "Transformed the script into a package"))
   )
 Description: Implementation of the mSVM-RFE algorithm to feature selection
     including the option to cut the features by half each round (instead
