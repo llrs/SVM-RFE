@@ -58,7 +58,7 @@ svmRFE <- function(X, response, k = 1, halve.above = 5000) {
 
   i.surviving <- seq_len(n)
   i.ranked <- n
-  ranked.list <- vector(length = n)
+  ranked.list <- vector(mode = "numeric", length = n)
 
   # Recurse through all the features
   while (length(i.surviving) > 0) {
