@@ -44,7 +44,13 @@ svmRFE <- function(X, response, k = 1, halve.above = 5000) {
 
   # Scale data up front so it doesn't have to be redone each pass
   message("Scaling data...")
-  X[, -1] <- scale(X[, -1])
+
+  if (is.character(response) || is.factor(response)) {
+      X <- scale(X)
+  } else {
+      response <- X[, 1]
+      X[, -1] <- scale(X[, -1])
+  }
   message("Done!\n")
   flush.console()
 
@@ -62,7 +68,7 @@ svmRFE <- function(X, response, k = 1, halve.above = 5000) {
       folds <- split(seq_along(folds), folds)
 
       # Obtain weights for each training set
-      w <- lapply(folds, getWeights, X[, c(1, 1 + i.surviving)], response = response)
+      w <- lapply(folds, getWeights, X[, i.surviving, drop = FALSE], response = response)
       w <- do.call(rbind, w)
 
       # Normalize each weights vector
@@ -75,7 +81,7 @@ svmRFE <- function(X, response, k = 1, halve.above = 5000) {
       c <- vbar / vsd
     } else {
       # Only do 1 pass (i.e. regular SVM-RFE)
-      w <- getWeights(NULL, X[, c(1, 1 + i.surviving)], response = response)
+      w <- getWeights(NULL, X[, i.surviving, drop = FALSE], response = response)
       c <- w * w
     }
 
@@ -126,12 +132,14 @@ getWeights <- function(test.fold, X, response) {
       response <- 1
   }
   if (!is.null(test.fold)) {
-      train.data <- X[-test.fold, ]
+      if (is.null(nrow(X)) || nrow(X) == 0) {
+          browser()
+      }
+      train.data <- X[-test.fold, , drop = FALSE]
       response <- response[-test.fold]
   }
   if (!(is.character(response) || is.factor(response))) {
-      train.data <- train.data[, -response]
-      response <- train.data[, response]
+      train.data <- train.data[, -response, drop = FALSE]
   }
 
   svmModel <- svm(train.data, response,
