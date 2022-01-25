@@ -50,7 +50,7 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
     if (k > 1) {
       # Subsample to obtain multiple weights vectors (i.e. mSVM-RFE)
       folds <- rep(seq_len(k), length.out = nrow(X))[sample(nrow(X))]
-      folds <- split(seq_len(k), folds)
+      folds <- split(seq_along(folds), folds)
 
       # Obtain weights for each training set
       w <- lapply(folds, getWeights, X[, c(1, 1 + i.surviving)])
@@ -133,8 +133,8 @@ getWeights <- function(test.fold, X) {
 #' @importFrom utils write.table
 WriteFeatures <- function(results, input, save = TRUE, file = "features_ranked.txt") {
   # Compile feature rankings across multiple folds
-  featureID <- order(rowMeans(sapply(results, function(x) order(x$feature)))
-  avg.rank <- order(rowMeans(sapply(results, function(x) order(x$feature)))
+  featureID <- order(rowMeans(sapply(results, function(x) order(x$feature))))
+  avg.rank <- order(rowMeans(sapply(results, function(x) order(x$feature))))
   feature.name <- colnames(input[, -1])[featureID]
   features.ranked <- data.frame(FeatureName = feature.name, FeatureID = featureID, AvgRank = avg.rank)
   if (save == T) {

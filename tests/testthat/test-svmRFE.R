@@ -1,9 +1,9 @@
 test_that("multiplication works", {
     set.seed(12345)
-    library(e1071)
     data(input)
     res <- svmRFE(input, k = 10, halve.above = 100)
     expect_equal(head(res, 23),
-                 c(337,319, 173, 175, 503, 287, 304, 492, 1, 47, 286, 214, 191,
-                   402, 313, 177, 187, 407, 255, 468, 256, 259, 391 ))
+                 c(337L, 173L, 313L, 1L, 94L, 503L, 47L, 255L, 147L, 50L, 175L,
+                   187L, 205L, 217L, 256L, 497L, 186L, 502L, 319L, 262L, 169L, 287L,
+                   481L))
 })
