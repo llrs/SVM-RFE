@@ -4,3 +4,8 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^CITATION\.cff$
+sge
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

@@ -10,7 +10,7 @@ Description: Implementation of the mSVM-RFE algorithm to feature selection
     including the option to cut the features by half each round (instead
     of one-by-one) if there are many features.
 License: GPL (>= 3)
-URL: https://github.com/llrs/SVM-RFE
+URL: https://github.com/llrs/SVM-RFE, https://llrs.github.io/SVM-RFE
 BugReports: https://github.com/llrs/SVM-RFE/issues
 Depends: 
     e1071 (>= 1.7.8),

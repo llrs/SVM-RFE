@@ -4,6 +4,8 @@
 # mRFE
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/llrs/SVM-RFE/workflows/R-CMD-check/badge.svg)](https://github.com/llrs/SVM-RFE/actions)
 <!-- badges: end -->
 
 The goal of mRFE is to provide a package for mSVM-RFE: (multiple)
