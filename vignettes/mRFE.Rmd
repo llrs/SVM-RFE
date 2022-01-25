@@ -77,7 +77,7 @@ folds
 In R, many parallel functions like to operate on lists, so next we'll reformat `folds` into a list, where each list element is a vector containing the test set indices for that fold.
 
 ```{r}
-folds <- lapply(1:nfold, function(x) which(folds == x))
+folds <- split(seq_along(folds), folds)
 folds
 ```
 
@@ -86,7 +86,7 @@ folds
 Using `lapply`, or one of its generic parallel cousins (ex: `sge.parLapply` from the `Rsge` package), we can now perform the feature ranking for all 10 training sets.
 
 ```{r}
-results <- lapply(folds, svmRFE.wrap, input, k=10, halve.above=100)
+results <- lapply(folds, svmRFE.wrap, input, k = length(folds), halve.above = 100)
 length(results)
 head(results)
 ```
