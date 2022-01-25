@@ -1,14 +1,15 @@
 #' Wrapper to run svmRFE function while omitting a given test fold
 #'
-#' @param test.fold Indexes of the samples
-#' @param X Input data to be subseted by test.fold
-#' @param \dots other arguments passed to svmRFE
+#' @param test.fold Indexes of the samples.
+#' @param X Input data to be subseted by test.fold.
+#' @inheritParams svmRFE
+#' @param \dots other arguments passed to svmRFE.
 #' @return A list with contains the feature rankings for that fold (`feature.ids`),
 #' as well as the training set row names used to obtain them (`train.data.ids`).
 #' The remaining test set row names are included as well (`test.data.ids`)
 #' @seealso [svmRFE()]
 #' @export
-svmRFE.wrap <- function(test.fold, X, ...) {
+svmRFE.wrap <- function(test.fold, X, response, ...) {
   train.data <- X[-test.fold, ]
   test.data <- X[test.fold, ]
 
@@ -20,22 +21,36 @@ svmRFE.wrap <- function(test.fold, X, ...) {
               test.data.ids = row.names(test.data)))
 }
 
-#' Feature selection with Multiple SVM Recursive Feature Elimination (RFE) algorithm
+#' Feature ranking via Feature Elimination (RFE) algorithm
 #'
 #' @param X input data as 2 dimensional data, samples in rows.
+#' @param response Character vector with the response vector of X or a numeric
+#' value with the column id where the response variable is.
 #' @param k K-fold number
 #' @param halve.above Max number of remaining features
 #' @return A list of the features selected.
 #' @export
 #' @importFrom utils txtProgressBar flush.console setTxtProgressBar
 #' @importFrom stats sd na.omit
-svmRFE <- function(X, k = 1, halve.above = 5000) {
+svmRFE <- function(X, response, k = 1, halve.above = 5000) {
+    if (is.numeric(response) && length(response) == 1 && missing(response)) {
+        stop("Response is not a numeric vector of length 1.")
+    } else if (length(response) != nrow(X)) {
+        stop("Response is not a character vector of length nrow(X)")
+    }
+
 
   n <- ncol(X) - 1
 
   # Scale data up front so it doesn't have to be redone each pass
   message("Scaling data...")
-  X[, -1] <- scale(X[, -1])
+
+  if (is.character(response) || is.factor(response)) {
+      X <- scale(X)
+  } else {
+      response <- X[, 1]
+      X[, -1] <- scale(X[, -1])
+  }
   message("Done!\n")
   flush.console()
 
@@ -43,7 +58,7 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
 
   i.surviving <- seq_len(n)
   i.ranked <- n
-  ranked.list <- vector(length = n)
+  ranked.list <- vector(mode = "numeric", length = n)
 
   # Recurse through all the features
   while (length(i.surviving) > 0) {
@@ -53,7 +68,7 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
       folds <- split(seq_along(folds), folds)
 
       # Obtain weights for each training set
-      w <- lapply(folds, getWeights, X[, c(1, 1 + i.surviving)])
+      w <- lapply(folds, getWeights, X[, i.surviving, drop = FALSE], response = response)
       w <- do.call(rbind, w)
 
       # Normalize each weights vector
@@ -66,7 +81,7 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
       c <- vbar / vsd
     } else {
       # Only do 1 pass (i.e. regular SVM-RFE)
-      w <- getWeights(NULL, X[, c(1, 1 + i.surviving)])
+      w <- getWeights(NULL, X[, i.surviving, drop = FALSE], response = response)
       c <- w * w
     }
 
@@ -111,13 +126,25 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
 #' @seealso [svm()]
 #' @export
 #' @importFrom e1071 svm
-getWeights <- function(test.fold, X) {
+getWeights <- function(test.fold, X, response) {
   train.data <- X
-  if (!is.null(test.fold)) train.data <- X[-test.fold, ]
+  if (missing(response) || is.null(response)) {
+      response <- 1
+  }
+  if (!is.null(test.fold)) {
+      if (is.null(nrow(X)) || nrow(X) == 0) {
+          browser()
+      }
+      train.data <- X[-test.fold, , drop = FALSE]
+      response <- response[-test.fold]
+  }
+  if (!(is.character(response) || is.factor(response))) {
+      train.data <- train.data[, -response, drop = FALSE]
+  }
 
-  svmModel <- svm(train.data[, -1], train.data[, 1],
+  svmModel <- svm(train.data, response,
     cost = 10, cachesize = 500,
-    scale = F, type = "C-classification", kernel = "linear"
+    scale = FALSE, type = "C-classification", kernel = "linear"
   )
 
   t(svmModel$coefs) %*% svmModel$SV
