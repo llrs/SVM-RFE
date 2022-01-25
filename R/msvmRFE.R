@@ -49,7 +49,7 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
   while (length(i.surviving) > 0) {
     if (k > 1) {
       # Subsample to obtain multiple weights vectors (i.e. mSVM-RFE)
-      folds <- rep(1:k, len = nrow(X))[sample(nrow(X))]
+      folds <- rep(1:k, length.out = nrow(X))[sample(nrow(X))]
       folds <- lapply(1:k, function(x) which(folds == x))
 
       # Obtain weights for each training set
@@ -82,7 +82,7 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
       ncut <- round(nfeat / 2)
       n <- nfeat - ncut
 
-      message("Features halved from ", nfeat, " to ", n, "\n")
+      message("\nFeatures halved from ", nfeat, " to ", n, "\n")
       flush.console()
 
       pb <- txtProgressBar(1, n, 1, style = 3)
@@ -167,9 +167,9 @@ FeatSweep.wrap <- function(i, results, input) {
         train.x = input[x$train.data.ids, 1 + x$feature.ids[1:i]],
         train.y = input[x$train.data.ids, 1],
         ranges  = list(gamma = 2^(-12:0), cost = 2^(-6:6))
-      )$best.par,
+      )$best.parameters,
       tunecontrol = tune.control(sampling = "fix")
-    )$perf
+    )$performances
   })
 
   error <- mean(sapply(svm.list, function(x) x$error))
