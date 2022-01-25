@@ -39,10 +39,10 @@ The first column (`DX2`) contains the class labels (`TD`: typically-developing c
 To perform the feature ranking, use the `svmRFE` function:
 
 ```{r}
-res <- svmRFE(input, k = 10, halve.above = 100)
+res <- svmRFE(input[, -1], input$DX2, k = 2, halve.above = 100)
 ```
 
-Here we've indicated that we want `k=10` for the k-fold cross validation as the "multiple" part of mSVM-RFE.
+Here we've indicated that we want `k=2` for the k-fold cross validation as the "multiple" part of mSVM-RFE.
 To use standard SVM-RFE, you can use `k=1`.
 Also notice the `halve.above` parameter.
 This allows you to cut the features in half each round, instead of one by one.
@@ -86,7 +86,8 @@ folds
 Using `lapply`, or one of its generic parallel cousins (ex: `sge.parLapply` from the `Rsge` package), we can now perform the feature ranking for all 10 training sets.
 
 ```{r}
-results <- lapply(folds, svmRFE.wrap, input, k = length(folds), halve.above = 100)
+results <- lapply(folds, svmRFE.wrap, input[, -1], response = input$DX2, 
+                  k = length(folds), halve.above = 100)
 length(results)
 head(results)
 ```

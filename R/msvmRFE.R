@@ -1,14 +1,15 @@
 #' Wrapper to run svmRFE function while omitting a given test fold
 #'
-#' @param test.fold Indexes of the samples
-#' @param X Input data to be subseted by test.fold
-#' @param \dots other arguments passed to svmRFE
+#' @param test.fold Indexes of the samples.
+#' @param X Input data to be subseted by test.fold.
+#' @inheritParams svmRFE
+#' @param \dots other arguments passed to svmRFE.
 #' @return A list with contains the feature rankings for that fold (`feature.ids`),
 #' as well as the training set row names used to obtain them (`train.data.ids`).
 #' The remaining test set row names are included as well (`test.data.ids`)
 #' @seealso [svmRFE()]
 #' @export
-svmRFE.wrap <- function(test.fold, X, ...) {
+svmRFE.wrap <- function(test.fold, X, response, ...) {
   train.data <- X[-test.fold, ]
   test.data <- X[test.fold, ]
 
@@ -20,16 +21,24 @@ svmRFE.wrap <- function(test.fold, X, ...) {
               test.data.ids = row.names(test.data)))
 }
 
-#' Feature selection with Multiple SVM Recursive Feature Elimination (RFE) algorithm
+#' Feature ranking via Feature Elimination (RFE) algorithm
 #'
 #' @param X input data as 2 dimensional data, samples in rows.
+#' @param response Character vector with the response vector of X or a numeric
+#' value with the column id where the response variable is.
 #' @param k K-fold number
 #' @param halve.above Max number of remaining features
 #' @return A list of the features selected.
 #' @export
 #' @importFrom utils txtProgressBar flush.console setTxtProgressBar
 #' @importFrom stats sd na.omit
-svmRFE <- function(X, k = 1, halve.above = 5000) {
+svmRFE <- function(X, response, k = 1, halve.above = 5000) {
+    if (is.numeric(response) && length(response) == 1 && missing(response)) {
+        stop("Response is not a numeric vector of length 1.")
+    } else if (length(response) != nrow(X)) {
+        stop("Response is not a character vector of length nrow(X)")
+    }
+
 
   n <- ncol(X) - 1
 
@@ -50,10 +59,10 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
     if (k > 1) {
       # Subsample to obtain multiple weights vectors (i.e. mSVM-RFE)
       folds <- rep(seq_len(k), length.out = nrow(X))[sample(nrow(X))]
-      folds <- split(seq_len(k), folds)
+      folds <- split(seq_along(folds), folds)
 
       # Obtain weights for each training set
-      w <- lapply(folds, getWeights, X[, c(1, 1 + i.surviving)])
+      w <- lapply(folds, getWeights, X[, c(1, 1 + i.surviving)], response = response)
       w <- do.call(rbind, w)
 
       # Normalize each weights vector
@@ -66,7 +75,7 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
       c <- vbar / vsd
     } else {
       # Only do 1 pass (i.e. regular SVM-RFE)
-      w <- getWeights(NULL, X[, c(1, 1 + i.surviving)])
+      w <- getWeights(NULL, X[, c(1, 1 + i.surviving)], response = response)
       c <- w * w
     }
 
@@ -111,13 +120,23 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
 #' @seealso [svm()]
 #' @export
 #' @importFrom e1071 svm
-getWeights <- function(test.fold, X) {
+getWeights <- function(test.fold, X, response) {
   train.data <- X
-  if (!is.null(test.fold)) train.data <- X[-test.fold, ]
+  if (missing(response) || is.null(response)) {
+      response <- 1
+  }
+  if (!is.null(test.fold)) {
+      train.data <- X[-test.fold, ]
+      response <- response[-test.fold]
+  }
+  if (!(is.character(response) || is.factor(response))) {
+      train.data <- train.data[, -response]
+      response <- train.data[, response]
+  }
 
-  svmModel <- svm(train.data[, -1], train.data[, 1],
+  svmModel <- svm(train.data, response,
     cost = 10, cachesize = 500,
-    scale = F, type = "C-classification", kernel = "linear"
+    scale = FALSE, type = "C-classification", kernel = "linear"
   )
 
   t(svmModel$coefs) %*% svmModel$SV
@@ -133,8 +152,8 @@ getWeights <- function(test.fold, X) {
 #' @importFrom utils write.table
 WriteFeatures <- function(results, input, save = TRUE, file = "features_ranked.txt") {
   # Compile feature rankings across multiple folds
-  featureID <- order(rowMeans(sapply(results, function(x) order(x$feature)))
-  avg.rank <- order(rowMeans(sapply(results, function(x) order(x$feature)))
+  featureID <- order(rowMeans(sapply(results, function(x) order(x$feature))))
+  avg.rank <- order(rowMeans(sapply(results, function(x) order(x$feature))))
   feature.name <- colnames(input[, -1])[featureID]
   features.ranked <- data.frame(FeatureName = feature.name, FeatureID = featureID, AvgRank = avg.rank)
   if (save == T) {
