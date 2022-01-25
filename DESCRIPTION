@@ -15,7 +15,7 @@ BugReports: https://github.com/llrs/SVM-RFE/issues
 Depends: 
     e1071 (>= 1.7.8),
     graphics,
-    R (>= 2.10),
+    R (>= 3.5),
     utils
 Suggests: 
     knitr,
