@@ -1,0 +1,10 @@
+pandoc: 2.14.2
+pkgdown: 2.0.2
+pkgdown_sha: ~
+articles:
+  mRFE: mRFE.html
+last_built: 2022-01-25T11:27Z
+urls:
+  reference: https://llrs.github.io/SVM-RFE/reference
+  article: https://llrs.github.io/SVM-RFE/articles
+
