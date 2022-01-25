@@ -41,7 +41,7 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
 
   pb <- txtProgressBar(1, n, 1, style = 3)
 
-  i.surviving <- 1:n
+  i.surviving <- seq_len(n)
   i.ranked <- n
   ranked.list <- vector(length = n)
 
@@ -49,8 +49,8 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
   while (length(i.surviving) > 0) {
     if (k > 1) {
       # Subsample to obtain multiple weights vectors (i.e. mSVM-RFE)
-      folds <- rep(1:k, length.out = nrow(X))[sample(nrow(X))]
-      folds <- lapply(1:k, function(x) which(folds == x))
+      folds <- rep(seq_len(k), length.out = nrow(X))[sample(nrow(X))]
+      folds <- split(seq_len(k), folds)
 
       # Obtain weights for each training set
       w <- lapply(folds, getWeights, X[, c(1, 1 + i.surviving)])
@@ -71,7 +71,7 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
     }
 
     # Rank the features
-    ranking <- sort(c, index.return = T)$ix
+    ranking <- order(c)
     if (length(i.surviving) == 1) {
       ranking <- 1
     }
@@ -133,8 +133,8 @@ getWeights <- function(test.fold, X) {
 #' @importFrom utils write.table
 WriteFeatures <- function(results, input, save = TRUE, file = "features_ranked.txt") {
   # Compile feature rankings across multiple folds
-  featureID <- sort(rowMeans(sapply(results, function(x) sort(x$feature, index.return = TRUE)$ix)), index = TRUE)$ix
-  avg.rank <- sort(rowMeans(sapply(results, function(x) sort(x$feature, index.return = TRUE)$ix)), index = TRUE)$x
+  featureID <- order(rowMeans(sapply(results, function(x) order(x$feature)))
+  avg.rank <- order(rowMeans(sapply(results, function(x) order(x$feature)))
   feature.name <- colnames(input[, -1])[featureID]
   features.ranked <- data.frame(FeatureName = feature.name, FeatureID = featureID, AvgRank = avg.rank)
   if (save == T) {
