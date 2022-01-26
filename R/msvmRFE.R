@@ -29,17 +29,19 @@ svmRFE.wrap <- function(test.fold, X, ...) {
 #' @export
 #' @importFrom utils txtProgressBar flush.console setTxtProgressBar
 #' @importFrom stats sd na.omit
-svmRFE <- function(X, k = 1, halve.above = 5000) {
+svmRFE <- function(X, k = 1, halve.above = 5000, verbose = FALSE) {
 
   n <- ncol(X) - 1
-
+  if (verbose) {
   # Scale data up front so it doesn't have to be redone each pass
   message("Scaling data...")
+  }
   X[, -1] <- scale(X[, -1])
-  message("Done!\n")
-  flush.console()
-
-  pb <- txtProgressBar(1, n, 1, style = 3)
+  if (verbose) {
+      message("Done!\n")
+      flush.console()
+      pb <- txtProgressBar(1, n, 1, style = 3)
+  }
 
   i.surviving <- seq_len(n)
   i.ranked <- n
@@ -81,11 +83,11 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
       nfeat <- length(i.surviving)
       ncut <- round(nfeat / 2)
       n <- nfeat - ncut
-
-      message("\nFeatures halved from ", nfeat, " to ", n, "\n")
-      flush.console()
-
-      pb <- txtProgressBar(1, n, 1, style = 3)
+      if (verbose) {
+          message("\nFeatures halved from ", nfeat, " to ", n, "\n")
+          flush.console()
+          pb <- txtProgressBar(1, n, 1, style = 3)
+      }
     } else {
       ncut <- 1
     }
@@ -94,12 +96,14 @@ svmRFE <- function(X, k = 1, halve.above = 5000) {
     ranked.list[i.ranked:(i.ranked - ncut + 1)] <- i.surviving[ranking[1:ncut]]
     i.ranked <- i.ranked - ncut
     i.surviving <- i.surviving[-ranking[1:ncut]]
-
-    setTxtProgressBar(pb, n - length(i.surviving))
-    flush.console()
+    if (verbose) {
+        setTxtProgressBar(pb, n - length(i.surviving))
+        flush.console()
+    }
   }
-
-  close(pb)
+  if (verbose) {
+      close(pb)
+  }
 
   return(ranked.list)
 }
